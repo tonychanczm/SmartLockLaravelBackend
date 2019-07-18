@@ -1,0 +1,70 @@
+签名方式
+1、准备参数：
+	[App Param #1]
+	[App Param #2]
+    ...
+	[App Param #n]  - Api应用所需的参数
+    timestamp       - UNIX时间戳，与服务器的时间误差不超出30分钟
+
+2、将参数按照key进行字典排序
+3、将参数拼接成以下格式（就是http get的参数那样）
+    String queueString = "[App Param #1]=val1&[App Param #2]=val2& ... &[App Param #n]=valn&timestamp=12345678";
+4、使用API KEY生成签名：
+    String sign = strtolower(md5(md5(queueString) + APIKEY));
+
+用户按指纹进门： (done)
+Path: /api/arduino/finger/login
+Method: GET
+Params:	finger_id   int	    - 指纹ID
+		timestamp   int	    - UNIX时间戳，与服务器的时间误差不超出30分钟
+		sign        string	- 签名，生成方式请参考签名方式
+Response:   00000-$NAME-$USER_NUMBER-$SERVER_TIMESTAMP
+            状态码  名字    工号/学号      服务器时间戳
+
+用户按指纹离开：(done)
+Path: /api/arduino/finger/logout
+Method: GET
+Params:	finger_id   int	    - 指纹ID
+		timestamp   int	    - UNIX时间戳，与服务器的时间误差不超出30分钟
+		sign        string	- 签名，生成方式请参考签名方式
+Response:   00000-$NAME-$USER_NUMBER-$SERVER_TIMESTAMP
+            状态码  名字    工号/学号      服务器时间戳
+
+获取可用的指纹ID：(done)
+Path: /api/arduino/finger/admin/get_available_id
+Method: GET
+Params: timestamp   int	    - UNIX时间戳，与服务器的时间误差不超出30分钟
+		sign        string	- 签名，生成方式请参考签名方式
+Response:   00000-$FINGER_ID-$SERVER_TIMESTAMP
+            状态码    指纹ID      服务器时间戳
+
+新指纹录入：(done)
+Path: /api/arduino/finger/admin/new
+Method: GET
+Params:	finger_id   int	    - 指纹ID
+		timestamp   int	    - UNIX时间戳，与服务器的时间误差不超出30分钟
+		sign        string	- 签名，生成方式请参考签名方式
+Response:   00000-$SERVER_TIMESTAMP
+            状态码    服务器时间戳
+
+获取服务器时间：(done)
+Path: /api/arduino/time
+Method: GET
+Param: 无
+Response:   00000-$SERVER_TIMESTAMP
+            状态码    服务器时间戳
+
+各种状态码：
+    // 公共状态码
+    public const SUCCESS                            = 00000; // 成功
+    public const SIGN_ERROR                         = 00001; // 不合法的签名
+    public const SIGN_TIMEOUT                       = 00002; // 签名已超时
+    // 指纹用户Api状态码
+    public const ARDUINO_FINGER_NOT_EXSIT           = 10001; // 指纹不存在于数据库中
+    public const ARDUINO_FINGER_SUSPEND             = 10002; // 该指纹被暂停使用
+    public const ARDUINO_FINGER_BANNED              = 10003; // 该指纹被禁止使用
+    public const ARDUINO_FINGER_NOT_REGISTERED      = 10004; // 该指纹未被注册到任何用户上
+    public const ARDUINO_FINGER_NOT_SERVICE_TIME    = 10005; // 目前是非服务时间，不得刷指纹进入
+    // 指纹管理员Api状态码
+    public const ARDUINO_FINGER_ADMIN_NOT_ENABLE    = 20000; // 未开启管理员模式，不得使用管理员API
+    public const ARDUINO_FINGER_EXIST               = 20001; // 该指纹ID已被其他用户占用
