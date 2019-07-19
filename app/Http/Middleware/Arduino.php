@@ -33,9 +33,11 @@ class Arduino
         }
 
         $last_api_req_time = Cache::get('last_api_req_time', 0);
-        if ($timestamp == $last_api_req_time) {
+        if ($timestamp <= $last_api_req_time) {
             return StatusCode::SIGN_TIMEOUT . "-" . time();
         }
+        Cache::put('last_api_req_time', $timestamp);
+
         foreach ($inputData as $key => $val) {
             $data[$key] = $val;
         }
