@@ -25,28 +25,34 @@ class Arduino
         $timestamp = $request->get('timestamp', null);
         $sign = $request->get('sign', null);
         if ($timestamp == null || $sign == null) {
-            return StatusCode::SIGN_ERROR . "-" . time();
+            echo StatusCode::SIGN_ERROR . "-" . time();
+            return \Response::noContent(400);
         }
 
         if (abs($timestamp - time()) > 30*60) {
-            return StatusCode::SIGN_TIMEOUT . "-" . time();
+            echo StatusCode::SIGN_TIMEOUT . "-" . time();
+            return \Response::noContent(400);
         }
 
         $last_api_req_time = Cache::get('last_api_req_time', 0);
         if ($timestamp <= $last_api_req_time) {
-            return StatusCode::SIGN_TIMEOUT . "-" . time();
+            echo StatusCode::SIGN_TIMEOUT . "-" . time();
+            return \Response::noContent(400);
         }
         Cache::put('last_api_req_time', $timestamp);
 
         foreach ($inputData as $key => $val) {
-            $data[$key] = $val;
+            if ($val != null) {
+                $data[$key] = $val;
+            }
         }
         $data['timestamp'] = $timestamp;
         ksort($data);
-        $str = http_build_query($data);
+        $str = htmlspecialchars(http_build_query($data));
         $local_sign = strtolower(md5(md5($str) . $api_key));
         if ($local_sign != $sign) {
-            return StatusCode::SIGN_ERROR . "-" . time();
+            echo StatusCode::SIGN_ERROR . "-" . time();
+            return \Response::noContent(400);
         }
 
         return $next($request);

@@ -25,4 +25,5 @@ Route::namespace('Apis')->group(function () {
     });
 
     Route::get('arduino/time', 'LockController@getServerTime'); // 获取服务器时间
+    Route::get('arduino/sign', 'LockController@signTest'); // 获取服务器时间
 });

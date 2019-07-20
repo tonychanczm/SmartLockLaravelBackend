@@ -26,10 +26,12 @@ class LockController extends Controller
             IOLogger::in($user->id);
             OPLogger::log(OPTypes::PERSON_IN_ROOM_UNLOCK, ['user_id'=>$user->id, 'username' => $user->name, 'user_number' => $user->no]);
 
-            return StatusCode::SUCCESS.'-'.$user->name.'-'.$user->no.'-'.time();
+            echo StatusCode::SUCCESS.'-'.$user->name.'-'.$user->no.'-'.time();
+            return \Response::noContent(200);
         } catch (Exception $e) {
             Log::error('指纹识别出错：' . StatusCode::STR[$e->getMessage()]);
-            return $e->getMessage().'-null-null-'.time();
+            echo $e->getMessage().'-null-null-'.time();
+            return \Response::noContent(400);
         }
 
     }
@@ -45,10 +47,12 @@ class LockController extends Controller
             IOLogger::out($user->id);
             OPLogger::log(OPTypes::PERSON_OUT_ROOM_UNLOCK, ['user_id' => $user->id, 'username' => $user->name, 'user_number' => $user->no]);
 
-            return StatusCode::SUCCESS.'-'.$user->name.'-'.$user->no.'-'.time();
+            echo StatusCode::SUCCESS.'-'.$user->name.'-'.$user->no.'-'.time();
+            return \Response::noContent(200);
         } catch (Exception $e) {
             Log::error('指纹识别出错：' . StatusCode::STR[$e->getMessage()]);
-            return $e->getMessage().'-null-null-'.time();
+            echo $e->getMessage().'-null-null-'.time();
+            return \Response::noContent(400);
         }
     }
 
@@ -58,9 +62,11 @@ class LockController extends Controller
         try {
             // 获取id
             $id = FingerManager::getAUseableFingerId();
-            return StatusCode::SUCCESS . '-'. $id .'-' .time();
+            echo StatusCode::SUCCESS . '-'. $id .'-' .time();
+            return \Response::noContent(200);
         } catch (Exception $e) {
-            return $e->getMessage() . '-0-' .time();
+            echo $e->getMessage() . '-0-' .time();
+            return \Response::noContent(400);
         }
     }
 
@@ -91,15 +97,39 @@ class LockController extends Controller
             } catch (Exception $e) {
                 throw new Exception(StatusCode::DB_ERROR);
             }
-            return StatusCode::SUCCESS . '-' . time();
+            echo StatusCode::SUCCESS . '-' . time();
+            return \Response::noContent(200);
         }catch (Exception $e) {
             Log::error('指纹写入错误：' . StatusCode::STR[$e->getMessage()]);
-            return $e->getMessage() . '-' . time();
+            echo $e->getMessage() . '-' . time();
+            return \Response::noContent(400);
         }
     }
 
     public function getServerTime (Request $request)
     {
-        return StatusCode::SUCCESS . '-' . time();
+        echo StatusCode::SUCCESS . '-' . time();
+        return \Response::noContent(400);
+    }
+
+    public function signTest(Request $request)
+    {
+        $api_key = env('API_KEY', '123456789991aassvvzzsaq');
+        $inputData = [
+            'finger_id' => $request->get('finger_id', null),
+        ];
+        $data = [];
+        $timestamp = time();
+        foreach ($inputData as $key => $val) {
+            if ($val != null) {
+                $data[$key] = $val;
+            }
+        }
+        $data['timestamp'] = $timestamp;
+        ksort($data);
+        $str = htmlspecialchars(http_build_query($data));
+        $data['sign'] = strtolower(md5(md5($str) . $api_key));
+        echo htmlspecialchars(http_build_query($data));
+        return \Response::noContent(200);
     }
 }
